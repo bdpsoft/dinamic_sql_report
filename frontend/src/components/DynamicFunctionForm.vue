@@ -133,6 +133,15 @@
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import axios from "axios";
+import { useAuth } from '../composables/useAuth';
+
+const { user } = useAuth();
+
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL: 'http://localhost:4000',
+  withCredentials: true
+});
 
 const functionDefinitions = ref([]);
 const selectedFunctionName = ref("");
@@ -144,8 +153,12 @@ const showFilters = ref(true);
 const result = ref(null);
 
 onMounted(async () => {
-  const res = await axios.get("/api/functions");
-  functionDefinitions.value = res.data;
+  try {
+    const res = await api.get("/api/functions");
+    functionDefinitions.value = res.data;
+  } catch (error) {
+    console.error('Failed to fetch functions:', error);
+  }
 });
 
 function onFunctionChange() {
@@ -183,13 +196,21 @@ function onFilterFieldChange(filter) {
 }
 
 async function handleSubmit() {
-  const payload = {
-    function_name: activeFunction.value.function_name,
-    parameters: { ...formData },
-    filters: filters.value
-  };
-  const res = await axios.post("/api/executeFunction", payload);
-  result.value = res.data;
-  submitted.value = true;
+  try {
+    const payload = {
+      function_name: activeFunction.value.function_name,
+      parameters: { ...formData },
+      filters: filters.value
+    };
+    const res = await api.post("/api/executeFunction", payload);
+    result.value = res.data;
+    submitted.value = true;
+  } catch (error) {
+    console.error('Failed to execute function:', error);
+    if (error.response?.status === 401) {
+      // Handle unauthorized error, possibly redirect to login
+      window.location.href = '/auth/login';
+    }
+  }
 }
 </script>
