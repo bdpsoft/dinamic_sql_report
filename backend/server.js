@@ -23,7 +23,8 @@ const bearerStrategy = new BearerStrategy({
   identityMetadata: `${config.auth.authority}/${config.auth.tenantId}/v2.0/.well-known/openid-configuration`,
   clientID: config.auth.clientId,
   validateIssuer: true,
-  issuer: `https://sts.windows.net/${config.auth.tenantId}/`,
+  // Use v2.0 issuer format to match v2.0 metadata and tokens
+  issuer: `https://login.microsoftonline.com/${config.auth.tenantId}/v2.0`,
   passReqToCallback: false
 }, (token, done) => {
   done(null, { email: token.preferred_username }, token);
@@ -41,30 +42,20 @@ app.use(express.json());
 
 const functions = JSON.parse(fs.readFileSync("./functions.json", "utf8"));
 
-// Auth routes
-app.get('/auth/login', passport.authenticate('azure-ad-oauth2'));
-
-app.get('/auth/callback',
-  passport.authenticate('azure-ad-oauth2', { session: false }),
-  (req, res) => {
-    res.redirect('http://localhost:5173'); // Redirect to frontend
-  }
-);
-
-app.get('/auth/user', (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
+// SPA + MSAL approach: backend exposes a protected endpoint that returns
+// the authenticated user info when the frontend sends a valid Bearer token.
+app.get('/auth/user', passport.authenticate('oauth-bearer', { session: false }), (req, res) => {
+  // `req.user` is populated by the oauth-bearer strategy when a valid
+  // access token is provided in the Authorization header.
+  res.json(req.user);
 });
 
 // Protected API routes
-app.get("/api/functions", passport.authenticate('bearer', { session: false }), (req, res) => {
+app.get("/api/functions", passport.authenticate('oauth-bearer', { session: false }), (req, res) => {
   res.json(functions);
 });
 
-app.post("/api/executeFunction", passport.authenticate('bearer', { session: false }), (req, res) => {
+app.post("/api/executeFunction", passport.authenticate('oauth-bearer', { session: false }), (req, res) => {
   const { function_name, parameters, filters } = req.body;
   console.log("Executing function:", function_name);
   console.log("Parameters:", parameters);

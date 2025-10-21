@@ -135,12 +135,11 @@ import { ref, reactive, onMounted } from "vue";
 import axios from "axios";
 import { useAuth } from '../composables/useAuth';
 
-const { user } = useAuth();
+const { acquireToken } = useAuth();
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:4000',
-  withCredentials: true
+  baseURL: 'http://localhost:4000'
 });
 
 const functionDefinitions = ref([]);
@@ -154,7 +153,9 @@ const result = ref(null);
 
 onMounted(async () => {
   try {
-    const res = await api.get("/api/functions");
+    const token = await acquireToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await api.get("/api/functions", { headers });
     functionDefinitions.value = res.data;
   } catch (error) {
     console.error('Failed to fetch functions:', error);
@@ -202,7 +203,9 @@ async function handleSubmit() {
       parameters: { ...formData },
       filters: filters.value
     };
-    const res = await api.post("/api/executeFunction", payload);
+  const token = await acquireToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await api.post("/api/executeFunction", payload, { headers });
     result.value = res.data;
     submitted.value = true;
   } catch (error) {

@@ -1,23 +1,32 @@
 import { ref } from 'vue';
+import { useMsal } from './useMsal';
 
 const user = ref(null);
 const isAuthenticated = ref(false);
 
 export const useAuth = () => {
-  const login = () => {
-    window.location.href = 'http://localhost:4000/auth/login';
+  const { signIn, signOut, acquireToken, ensureAccount, account } = useMsal();
+
+  const login = async () => {
+    await signIn();
+    ensureAccount();
+    await checkAuth();
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut();
     user.value = null;
     isAuthenticated.value = false;
-    // Add any additional cleanup
   };
 
   const checkAuth = async () => {
     try {
+      const token = await acquireToken();
+      if (!token) return false;
       const response = await fetch('http://localhost:4000/auth/user', {
-        credentials: 'include'
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       if (response.ok) {
         const userData = await response.json();
@@ -36,6 +45,7 @@ export const useAuth = () => {
     isAuthenticated,
     login,
     logout,
-    checkAuth
+    checkAuth,
+    account
   };
 };

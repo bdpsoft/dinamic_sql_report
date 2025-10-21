@@ -122,6 +122,57 @@ npm install
    6. Click **Add permissions**
    7. Click **Grant admin consent** (requires admin privileges)
 
+### Azure: SPA + API app registration (recommended)
+
+Follow these steps to register two app registrations in Azure AD: one for the frontend SPA and one for the backend API. This creates a clean separation of concerns and allows the SPA to request access tokens for the API.
+
+1. Register the API app (backend):
+   1. In **Azure Portal** > **Azure Active Directory** > **App registrations**, click **New registration**.
+   2. Name: `DynamicSQL-API` (or similar).
+   3. Supported account types: choose your tenant (Single tenant) or others as appropriate.
+   4. Redirect URI: leave blank for the API (not required).
+   5. Click **Register**.
+   6. In the API app, go to **Expose an API**:
+      - Click **Set** next to Application ID URI and accept or customize (e.g., `api://<API_CLIENT_ID>`).
+      - Click **Add a scope** and create a scope named `access_as_user` (full scope name will be like `api://<API_CLIENT_ID>/access_as_user`).
+      - Make the scope admin-consent display name and description appropriate.
+
+2. Register the SPA app (frontend):
+   1. In **App registrations**, click **New registration**.
+   2. Name: `DynamicSQL-SPA` (or similar).
+   3. Supported account types: your tenant.
+   4. Redirect URI: select **Single-page application (SPA)** and enter `http://localhost:5173` (Vite dev server).
+   5. Click **Register**.
+   6. In the SPA app, go to **Authentication**:
+      - Under **Implicit grant and hybrid flows** you don't need to enable anything if using the Authorization Code + PKCE flow (recommended). If you use the MSAL popup approach, ensure your redirect URI is registered.
+
+3. Grant the SPA permission to call the API:
+   1. In the SPA app, go to **API permissions** > **Add a permission**.
+   2. Select **My APIs** and choose the `DynamicSQL-API` app.
+   3. Select the delegated permission `access_as_user` (the scope you created).
+   4. Click **Add permissions**.
+   5. Click **Grant admin consent** for the tenant (requires admin privileges).
+
+4. Configure client IDs and endpoints in the apps and `.env` files:
+   - Backend `.env` should use the API app's client ID and tenant ID where appropriate.
+   - Frontend `.env` should use the SPA app's client ID and authority.
+
+5. Ensure MSAL requests the API scope when acquiring tokens. Example scope value for the SPA to request:
+```
+api://<API_CLIENT_ID>/access_as_user
+```
+
+6. Test the flow locally:
+   1. Start the backend: `cd backend && npm run dev`
+   2. Start the frontend: `cd frontend && npm run dev`
+   3. Open `http://localhost:5173`, sign in, and the SPA should request an access token for the API scope.
+   4. The SPA sends requests to the backend with `Authorization: Bearer <access_token>`; backend validates with BearerStrategy.
+
+Notes:
+- If you use Authorization Code + PKCE (recommended for SPAs), configure MSAL to use the redirect flow instead of popups. The `@azure/msal-browser` library supports both.
+- If tokens fail validation, check that the token audience (`aud`) matches the API app registration and that issuer and tenant IDs are correct.
+- For production, replace `http://localhost:5173` with your actual hosted SPA URL and update redirect URIs accordingly.
+
 ### Running the Application
 
 1. Start the backend server:
