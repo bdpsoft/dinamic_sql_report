@@ -1,0 +1,30 @@
+[
+  {
+    "function_name": "dbo.sfAB__ADOC_DnevnikOtpemePoMestuIsporuka",
+    "parameters": [
+      { "name": "@datum_od", "type": "date" },
+      { "name": "@datum_do", "type": "date" },
+      { "name": "@firma", "type": "int" }
+    ],
+    "result_fields": [
+      { "name": "Datum", "type": "datetime" },
+      { "name": "Kupac", "type": "nvarchar" },
+      { "name": "NazivKupca", "type": "nvarchar" },
+      { "name": "Cena", "type": "decimal" },
+      { "name": "Region", "type": "nvarchar" }
+    ]
+  },
+  {
+    "function_name": "dbo.sfAB__ADOC_PregledNarudzbina",
+    "parameters": [
+      { "name": "@datum", "type": "date" },
+      { "name": "@komercijalista", "type": "nvarchar" }
+    ],
+    "result_fields": [
+      { "name": "BrojNarudzbine", "type": "nvarchar" },
+      { "name": "Kupac", "type": "nvarchar" },
+      { "name": "Iznos", "type": "decimal" },
+      { "name": "Status", "type": "nvarchar" }
+    ]
+  }
+]
