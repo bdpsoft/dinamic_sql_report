@@ -19,11 +19,13 @@ export const useAuth = () => {
     isAuthenticated.value = false;
   };
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
   const checkAuth = async () => {
     try {
       const token = await acquireToken();
       if (!token) return false;
-      const response = await fetch('http://localhost:4000/auth/user', {
+      const response = await fetch(`${API_URL}/auth/user`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

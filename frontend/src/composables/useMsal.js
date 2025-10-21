@@ -13,8 +13,10 @@ const msalConfig = {
   }
 };
 
+// Build login/acquire token scopes from env. If an API scope is provided, include it.
+const apiScope = import.meta.env.VITE_API_SCOPE || '';
 const loginRequest = {
-  scopes: [ 'openid', 'profile', 'email', 'api://backend/access_as_user' ]
+  scopes: apiScope ? ['openid', 'profile', 'email', apiScope] : ['openid', 'profile', 'email']
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);

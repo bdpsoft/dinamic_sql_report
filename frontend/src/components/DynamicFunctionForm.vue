@@ -137,9 +137,10 @@ import { useAuth } from '../composables/useAuth';
 
 const { acquireToken } = useAuth();
 
-// Create axios instance with base configuration
+// Create axios instance with base configuration (API URL comes from Vite env)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const api = axios.create({
-  baseURL: 'http://localhost:4000'
+  baseURL: API_URL
 });
 
 const functionDefinitions = ref([]);

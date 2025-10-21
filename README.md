@@ -72,6 +72,20 @@ cd frontend
 npm install
 ```
 
+Frontend environment and install notes:
+
+1. Copy the example env file and fill in values:
+```powershell
+cd frontend
+cp .env.example .env
+# Edit .env and set VITE_MSAL_CLIENT_ID, VITE_MSAL_AUTHORITY, VITE_MSAL_REDIRECT_URI, VITE_API_URL, VITE_API_SCOPE
+```
+
+2. If you encounter dependency resolution errors during `npm install`, try installing with legacy peer deps (this was needed for some dev environments):
+```powershell
+npm install --legacy-peer-deps
+```
+
 ### Microsoft 365 Authentication Setup
 
 1. Register the application in Azure AD:
