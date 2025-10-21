@@ -19,6 +19,25 @@
     </nav>
 
     <main class="p-8">
+      <component :is="currentView" />
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, computed } from 'vue';
+import DynamicFunctionForm from "./components/DynamicFunctionForm.vue";
+import LandingRedirect from './components/LandingRedirect.vue';
+import { useAuth } from './composables/useAuth';
+
+const { user, isAuthenticated, login, logout, checkAuth } = useAuth();
+
+const currentView = computed(() => {
+  // If the browser has been redirected back from MSAL, use the landing component
+  if (window.location.pathname === '/redirect') return LandingRedirect;
+  // Otherwise show either login prompt or the main app
+  return isAuthenticated.value ? DynamicFunctionForm : {
+    template: `
       <div v-if="!isAuthenticated" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
         <h2 class="text-2xl font-bold mb-4">Welcome</h2>
         <p class="mb-4">Please sign in with your Microsoft 365 account to continue.</p>
@@ -26,18 +45,12 @@
           Sign in with Microsoft
         </button>
       </div>
-
-      <DynamicFunctionForm v-else />
-    </main>
-  </div>
-</template>
-
-<script setup>
-import { onMounted } from 'vue';
-import DynamicFunctionForm from "./components/DynamicFunctionForm.vue";
-import { useAuth } from './composables/useAuth';
-
-const { user, isAuthenticated, login, logout, checkAuth } = useAuth();
+    `,
+    setup() {
+      return { isAuthenticated, login };
+    }
+  };
+});
 
 onMounted(async () => {
   await checkAuth();

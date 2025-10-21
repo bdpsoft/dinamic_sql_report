@@ -23,14 +23,27 @@ const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 const account = ref(null);
 
+// Process redirect responses when the app loads after a redirect
+msalInstance.handleRedirectPromise().then((response) => {
+  if (response && response.account) {
+    msalInstance.setActiveAccount(response.account);
+    account.value = response.account;
+  } else {
+    // No redirect response - try to set active account from cache
+    account.value = msalInstance.getActiveAccount();
+  }
+}).catch((err) => {
+  console.error('MSAL handleRedirectPromise error', err);
+});
+
 export function useMsal() {
   const signIn = async () => {
+    // Redirect flow: this will navigate away to the Azure login page.
     try {
-      const response = await msalInstance.loginPopup(loginRequest);
-      account.value = response.account || msalInstance.getActiveAccount();
-      return response;
+      await msalInstance.loginRedirect(loginRequest);
+      // After redirect returns, handleRedirectPromise above will set account
     } catch (e) {
-      console.error('MSAL login failed', e);
+      console.error('MSAL loginRedirect failed', e);
       throw e;
     }
   };
@@ -39,11 +52,11 @@ export function useMsal() {
     try {
       const current = msalInstance.getActiveAccount();
       if (current) {
-        await msalInstance.logoutPopup({ account: current });
+        await msalInstance.logoutRedirect({ account: current });
         account.value = null;
       }
     } catch (e) {
-      console.error('MSAL logout failed', e);
+      console.error('MSAL logoutRedirect failed', e);
     }
   };
 
@@ -57,9 +70,14 @@ export function useMsal() {
       });
       return result.accessToken;
     } catch (error) {
-      // fallback to interactive
-      const result = await msalInstance.acquireTokenPopup(loginRequest);
-      return result.accessToken;
+      // Fallback to redirect flow - this will navigate away
+      try {
+        await msalInstance.acquireTokenRedirect(loginRequest);
+        return null; // token will be available on return from redirect
+      } catch (e) {
+        console.error('MSAL acquireTokenRedirect failed', e);
+        return null;
+      }
     }
   };
 

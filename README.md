@@ -78,8 +78,18 @@ Frontend environment and install notes:
 ```powershell
 cd frontend
 cp .env.example .env
-# Edit .env and set VITE_MSAL_CLIENT_ID, VITE_MSAL_AUTHORITY, VITE_MSAL_REDIRECT_URI, VITE_API_URL, VITE_API_SCOPE
 ```
+
+2. Configure the environment variables in `.env`:
+```plaintext
+VITE_MSAL_CLIENT_ID=your-client-id-from-azure-portal
+VITE_MSAL_AUTHORITY=https://login.microsoftonline.com/your-tenant-id
+VITE_MSAL_REDIRECT_URI=http://localhost:5173/redirect
+VITE_API_URL=http://localhost:3000
+VITE_API_SCOPE=api://your-client-id/access_as_user
+```
+
+Note: The redirect URI must exactly match the one configured in Azure AD (http://localhost:5173/redirect). This path is handled by the application's landing component to complete the authentication flow.
 
 2. If you encounter dependency resolution errors during `npm install`, try installing with legacy peer deps (this was needed for some dev environments):
 ```powershell
@@ -95,8 +105,13 @@ npm install --legacy-peer-deps
    4. Fill in the registration form:
       - **Name**: Dynamic SQL Form Runner (or your preferred name)
       - **Supported account types**: Single tenant (your organization only)
-      - **Redirect URI**: Web > http://localhost:4000/auth/callback
+      - **Platform configuration**: Single-page application (SPA)
+      - **Redirect URI**: SPA > http://localhost:5173/redirect
+      - **Front-channel logout URL**: http://localhost:5173
    5. Click **Register**
+   6. Under **Authentication**:
+      - Enable **Access tokens** and **ID tokens**
+      - Set **Implicit grant and hybrid flows** to No
 
 2. Configure the new application:
    1. Note down the following values from the Overview page:
@@ -182,8 +197,9 @@ api://<API_CLIENT_ID>/access_as_user
    3. Open `http://localhost:5173`, sign in, and the SPA should request an access token for the API scope.
    4. The SPA sends requests to the backend with `Authorization: Bearer <access_token>`; backend validates with BearerStrategy.
 
-Notes:
-- If you use Authorization Code + PKCE (recommended for SPAs), configure MSAL to use the redirect flow instead of popups. The `@azure/msal-browser` library supports both.
+- Notes:
+- The frontend is configured to use the Authorization Code + PKCE redirect flow (recommended) instead of popups. This requires the SPA redirect URI to be registered in the SPA app registration (for example `http://localhost:5173`).
+- If you prefer popups, the frontend code can be adjusted to use MSAL popup methods instead.
 - If tokens fail validation, check that the token audience (`aud`) matches the API app registration and that issuer and tenant IDs are correct.
 - For production, replace `http://localhost:5173` with your actual hosted SPA URL and update redirect URIs accordingly.
 
