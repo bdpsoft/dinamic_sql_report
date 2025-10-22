@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 export const config = {
     auth: {
         clientId: process.env.AZURE_CLIENT_ID || '',

@@ -4,10 +4,7 @@ import fs from "fs";
 import passport from "passport";
 import { BearerStrategy } from "passport-azure-ad";
 import session from "express-session";
-import dotenv from "dotenv";
 import { config } from "./config.js";
-
-dotenv.config();
 
 const app = express();
 
