@@ -22,6 +22,8 @@ const loginRequest = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 const account = ref(null);
+// ✅ Initialize first
+await msalInstance.initialize();
 
 // Process redirect responses when the app loads after a redirect
 msalInstance.handleRedirectPromise().then((response) => {
